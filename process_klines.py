@@ -52,7 +52,7 @@ for code in codes:
       if idx>= row_range:
         row_mask_ = row_mask + idx
         fetch_rows = df.iloc[row_mask_]
-        # fetch_rows = df_array[row_mask_] # faster
+        # fetch_rows = df_array[row_mask_] # faster??? but need column idx dict
         print('#fetched rows',len(fetched_rows))
         print(feteched_rows)
         # TODO call factors generators, pass rows and column index
@@ -68,21 +68,37 @@ for code in codes:
  
  #====================SMA=====================
  factors_df = None # read factors
- smas = [{'name':,'n','m'},
+ results = []
+  smas = [{'name':,'factor':,'n','m'},
  {'name':,'n','m'},
- smas
  for code in codes:
-  column_df = factors_df[factors_df==code]['factor name']
-  
-  sma_list = {'fname':[], 'fname2':[]}
+         df = factors_df[factors_df==code]
+  #column_df = factors_df[factors_df==code]['factor name']
+  smas_temp = [{'name':, 'n':,'m':,'column_df':df[s['factor']],'list':[]}for s in smas]
+  # sma_list = {'fname':[], 'fname2':[]}
   for idx in range(0:column_df.index.size):
-    for sma in smas:
+    for sma in smas_temp:
       n_ = sma['n']
       m_ = sma['m']
+      l = sma['list']
+      ori = sma['column_df']
       if idx == 0:
-        pass
+         # handle first element
+         l.append(ori.iloc[idx])
       else:
-        sma.append
+         # TODO compute sma
+         y = None
+        sma.append(y)
+         
+  # TODO call custom function
+  for s in smas_temp:
+         pass
+         
+  # add to ori df
+  df['sma_f'] =  None
+  result.append(df)
+         
+  
       
   
   
