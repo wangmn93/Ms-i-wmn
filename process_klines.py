@@ -9,14 +9,21 @@ def alpha_test_gen(df):
     # print(df)
     return 0
 
-def create_kline(klines):
+def create_kline(klines, customer_vars=None):
+
     start_kline = klines.iloc[0]
     end_kline = klines.iloc[-1]
-    return {'time':start_kline.time, 'date':start_kline.date, 'code':start_kline.code,'end_date':end_kline.date,
+    kline_ = {'time':start_kline.time, 'date':start_kline.date, 'code':start_kline.code,'end_date':end_kline.date,
             'end_time':end_kline.time, 'period':klines.index.size}
 
+    if customer_vars is not None:
+        for var in customer_vars:
+            kline_[var['name']] = var['function'](kline_)
+
+    return kline_
+
 #==============preprocess================
-def create_new_klines(klines_df, codes, period):
+def create_new_klines(klines_df, codes, period, custom_vars=None):
     new_klines_all = []
     for code in codes:
         print('Creating period %d klines for code %d ...'%(period,code))
@@ -28,7 +35,7 @@ def create_new_klines(klines_df, codes, period):
                 fetched_rows = df.iloc[idx:idx+period]
 
                 # print(fetched_rows)
-                kline = create_kline(fetched_rows)
+                kline = create_kline(fetched_rows, custom_vars)
                 new_klines.append(kline)
             else:
                 print('#Rows is not enough, code %d, idx %d #total idx %d'%(code, idx, df.index.size))
@@ -62,8 +69,10 @@ def compute_factor(klines_df,codes,period,generators):
         factors_list = []
         for idx in range(0, df.index.size):
             kline = df.iloc[idx]
-            # TODO handle variable mask
+
+            # TODO handle variable mask!!!
             time_idx = time2idx[kline['end_time']]
+
             factors = {'code':code, 'time':kline['end_time'],'date':kline['end_date']}
             for gen in factor_generators:
                 name = gen['name']
@@ -122,6 +131,10 @@ def compute_SMA(factors_df, codes, smas, func):
     print('Save to factor_sma.csv')
     results_df.to_csv('factors_sma.csv')
 
+def var_test(kline):
+    # return float(kline['high'])/kline['low'] - 1
+    return -1.
+
 if __name__ == '__main__':
 
     # test_df = [{'time': 930, 'date': 20180307, 'code': 6},
@@ -153,10 +166,11 @@ if __name__ == '__main__':
     Preprocess klines
     '''
     codes = [6, 20]
-    period = 5
+    period = 1
     # test preprocess klines
-    # klines_df = pd.read_csv('klines_test.csv')
-    # create_new_klines(df=klines_df, codes=codes, period=period)
+    klines_df = pd.read_csv('klines_test.csv')
+    custom_vars = [{'name':'ret', 'function':var_test}]
+    create_new_klines(klines_df=klines_df, codes=codes, period=period, custom_vars=custom_vars)
 
     '''
     Compute factors
@@ -175,7 +189,7 @@ if __name__ == '__main__':
         factor_generators.append({'name':args['name'], 'mask':np.array(row_mask), 'range':row_range,
                                  'function':args['function']})
     print(factor_generators)
-    compute_factor(klines_df=new_klines_df, codes=codes, generators=factor_generators)
+    # compute_factor(klines_df=new_klines_df, codes=codes, generators=factor_generators)
 
 
     '''
