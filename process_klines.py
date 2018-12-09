@@ -43,8 +43,11 @@ def create_new_klines(klines_df, codes, period):
 # code = 6
 # create row mask
 # period=5
+def generate_mask(period, num):
+    mask = [i*(-period) for i in range(num)][::-1]
+    return np.array(mask)
 
-def compute_factor(klines_df,codes, generators):
+def compute_factor(klines_df,codes,period,generators):
     # klines_df = self.klines_df
     factors_list_all = []
 
@@ -59,11 +62,14 @@ def compute_factor(klines_df,codes, generators):
         factors_list = []
         for idx in range(0, df.index.size):
             kline = df.iloc[idx]
+            # TODO handle variable mask
+            time_idx = time2idx[kline['end_time']]
             factors = {'code':code, 'time':kline['end_time'],'date':kline['end_date']}
             for gen in factor_generators:
                 name = gen['name']
                 row_range = gen['range']
-                row_mask = gen['mask']
+                # handle vatiable mask
+                row_mask = gen['mask'] if gen['mask'] is not None else generate_mask(period, time_idx+1)
                 func = gen['function']
                 if idx>= row_range:
                     row_mask_ = row_mask + idx
@@ -114,7 +120,7 @@ def compute_SMA(factors_df, codes, smas, func):
     results_df = pd.concat(results)
     print(results_df)
     print('Save to factor_sma.csv')
-    # results_df.to_csv('factors_sma.csv')
+    results_df.to_csv('factors_sma.csv')
 
 if __name__ == '__main__':
 
@@ -164,12 +170,12 @@ if __name__ == '__main__':
     factor_generators = []
     # convert args to row mask
     for args in factor_args:
-        row_mask = [i * (-args['period']) for i in range(args['num'])][::-1]
+        row_mask = generate_mask(period=period, num=args['num'])
         row_range = row_mask[-1] - row_mask[0]  # check this !!!
         factor_generators.append({'name':args['name'], 'mask':np.array(row_mask), 'range':row_range,
                                  'function':args['function']})
-    # print(factor_generators)
-    # compute_factor(klines_df=new_klines_df, codes=codes, generators=factor_generators)
+    print(factor_generators)
+    compute_factor(klines_df=new_klines_df, codes=codes, generators=factor_generators)
 
 
     '''
@@ -178,11 +184,10 @@ if __name__ == '__main__':
     sma_args = [{'name':'sma1', 'factor':'alpha_test2', 'n':6, 'm':4},
             {'name': 'sma2', 'factor': 'alpha_test2', 'n': 42, 'm': 2}]
     factors_df = pd.read_csv('factors_period5.csv')
-    def custom_after_sma(smas):
-
+    def func_after_sma(smas):
         return smas
 
-    compute_SMA(factors_df=factors_df, codes=codes, smas=sma_args,
-                func=custom_after_sma)
+    # compute_SMA(factors_df=factors_df, codes=codes, smas=sma_args,
+    #             func=custom_after_sma)
 
     
