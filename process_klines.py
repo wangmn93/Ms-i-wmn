@@ -23,6 +23,21 @@ def create_kline(klines, customer_vars=None):
     return kline_
 
 #==============preprocess================
+# adjust
+def adjust_m1_klines(klines_df, adj_df, codes):
+    results = []
+    for code in codes:
+        df = klines_df[klines_df['code']==code]
+        dates = df['date'].unique().values
+        for date in dates:
+            df_ = df[df['date']==date]
+            factor = adj_df[(adj_df['code']==code) & (adj_df['date']==date)]
+            print(factor)
+            # adjust price and volume
+            results.append(df_)
+   results_df = pd.concat(results)
+   results_df.to_csv('adj_m1_klines.csv')
+    
 def create_new_klines(klines_df, codes, period, custom_vars=None):
     new_klines_all = []
     for code in codes:
@@ -161,7 +176,13 @@ if __name__ == '__main__':
     # test_df = pd.DataFrame(test_df)
     # test_df.to_csv('klines_test.csv')
     # for test
-
+    '''
+    Adjust 1m klines
+    '''
+    codes = [6, 20]
+    klines_df = pd.read_csv('klines_test.csv')
+    adj_df = pd.read_csv('adj_factor.csv')
+    adjust_m1_klines(klines_df = klines_df, adj_df = adj_df, codes = codes)
     '''
     Preprocess klines
     '''
